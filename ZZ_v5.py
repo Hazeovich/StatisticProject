@@ -80,8 +80,7 @@ def getDistribution(asset = pd.DataFrame(), show_plt = True):
         plt.stairs(counts, bins)
         plt.show()
     return round(np.average(h)/2)
-
-        
+  
 def getPrehistory(asset = pd.DataFrame(), time_history = int()):
     points = asset[asset[asset.columns[1]] != 0]
     prehistory = pd.DataFrame()
