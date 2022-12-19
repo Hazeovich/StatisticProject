@@ -6,7 +6,7 @@ from torch.autograd import Variable
 import numpy as np
 import random
 
-INPUT_DIM = 8          #?Входные параметры
+INPUT_DIM = 8           #?Входные параметры
 OUTPUT_DIM = 3          #?Выходные признаки 3 штуки т.к. (-1 0 1)
 H_DIM1 = 6              #?Кол-во нейронов в первом слое
 H_DIM2 = 6

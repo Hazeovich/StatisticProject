@@ -8,7 +8,7 @@ from zigzag import *
 
 symbol = 'symbol=AAPL'
 interval='interval=60min'
-PATH_TO_CSV = 'D:/Programing/Project/data/' + symbol + interval + '.csv'
+PATH_TO_CSV = 'data/' + symbol + interval + '.csv'
 
 df = pd.read_csv(PATH_TO_CSV)
 df.columns=['point', 'date/time', 'open', 'hight', 'low', 'close', 'volume']
@@ -57,7 +57,9 @@ def showPlot(asset = pd.DataFrame()):
     plt.show()
 
 def getDistribution(asset = pd.DataFrame(), show_plt = True):
-    asset_pivots = asset[asset[asset.columns[1]] != 0]
+    asset_pivots = asset[(asset[asset.columns[1]] != 0) & (asset[asset.columns[1]] != 2)]
+    
+    
     time_diff = pd.DataFrame()
     for i in range(len(asset_pivots.index)-1):
         date1 = asset_pivots.iloc[i,:].name
@@ -68,14 +70,17 @@ def getDistribution(asset = pd.DataFrame(), show_plt = True):
     time_diff = time_diff.iloc[:,1]
     
     h = time_diff.astype('timedelta64[h]').values
-    h = h.astype(np.float64)
+    h = h.astype(np.float64) #Тут точки для гистограммы
     
-    print(sum(h)/len(h), np.average(h))
+    pd.DataFrame(h).to_csv('histagram/points.csv') 
     
-    counts, bins = np.histogram(h, bins=40, density=True)
+    counts, bins = np.histogram(h, bins=20, density=False)
+    hist_df = pd.DataFrame(data=[counts, bins])
+    hist_df = hist_df.T
+    os.makedirs('histagram', exist_ok=True)
+    hist_df.to_csv(f'histagram/hist_{symbol}_{interval}_{asset.columns[0]}.csv')
     
     indexmax = counts.argmax()
-    hoursavg = (bins[indexmax] + bins[indexmax+1])/2
     if show_plt:
         plt.stairs(counts, bins)
         plt.show()
@@ -93,12 +98,10 @@ def getPrehistory(asset = pd.DataFrame(), time_history = int()):
         linedf.append(indicator)
         for i in temparr: linedf.append(i)
         
-        
         if len(temparr) == time_history:
             temparr = [linedf]
             tempdf = pd.DataFrame(temparr)
             prehistory = pd.concat([prehistory, tempdf])
-    
     
     prehistory.reset_index(inplace=True)
     prehistory = prehistory.iloc[:,1:] 
@@ -132,12 +135,12 @@ def zigzagIndicator(h, asset = pd.DataFrame(), show_plt = False, show_hist = Fal
     print(f"Time history len: {time_history}h\nCount of indicator's point: {asset_indicators.shape[0]}")
     prehistory = getPrehistory(asset=asset, time_history=time_history)
     os.makedirs('prehistory', exist_ok=True)
-    prehistory.to_csv(f'D:\Programing\Project\prehistory\dataset_{symbol}_{interval}_{asset.columns[0]}.csv') #?Сохраняем в csv
+    prehistory.to_csv(f'prehistory\dataset_{symbol}_{interval}_{asset.columns[0]}.csv') #?Сохраняем в csv
           
 h_open = 0.023
 h_hight = 0.02
 h_low = 0.02
-h_close = 0.02     
+h_close = 0.08    
 zigzagIndicator(h_close, df_close, True, True)
 # zigzagIndicator(h_open, df_open, True, True)
 # zigzagIndicator(h_hight, df_hight, True, True)

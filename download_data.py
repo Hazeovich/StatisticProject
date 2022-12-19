@@ -2,13 +2,14 @@ import pandas as pd
 import requests
 import csv
 import time
+from apikey import apikey
 
 link = 'https://www.alphavantage.co/query?'
 fucn = 'function=TIME_SERIES_INTRADAY_EXTENDED'
-symbol = 'symbol=AAPL'
+symbol = 'symbol=EURUSD'
 interval='interval=60min'
-apikey='apikey=104NFNEMPQ6Q3XL9'
-PATH_TO_CSV = 'D:/Programing/Project/data/' + symbol + interval + '.csv'
+
+PATH_TO_CSV = 'data/' + symbol + interval + '.csv'
 slice_data = []
 years = 1
 for year in range(1,2+1):
