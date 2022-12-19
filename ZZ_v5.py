@@ -59,7 +59,6 @@ def showPlot(asset = pd.DataFrame()):
 def getDistribution(asset = pd.DataFrame(), show_plt = True):
     asset_pivots = asset[(asset[asset.columns[1]] != 0) & (asset[asset.columns[1]] != 2)]
     
-    
     time_diff = pd.DataFrame()
     for i in range(len(asset_pivots.index)-1):
         date1 = asset_pivots.iloc[i,:].name
