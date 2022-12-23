@@ -1,0 +1,163 @@
+import pandas as pd
+import numpy as np
+import random
+import os
+import matplotlib.pyplot as plt
+from zigzag import *
+
+
+class ZigZag():
+    
+    def __init__(self, filePath):
+        self.filePath = filePath
+       
+        self.df = pd.read_csv(filePath)
+        self.df.columns=['point', 'date/time', 'open', 'hight', 'low', 'close', 'volume']
+        self.df['date/time'] = pd.to_datetime(df.loc[:,df.columns[1]])
+        self.df.sort_values('date/time', ascending=True, inplace=True)
+        self.df.reset_index(inplace=True)
+        self.df = self.df.iloc[:,2:]
+
+        self.df = self.df[['date/time', 'close']]
+        self.df.set_index(self.df.columns[0], inplace=True)
+    
+    def zigzagIndicator(self, h, asset = pd.DataFrame()):
+        self.asset = asset
+        self.val_name = self.asset.columns[0]
+        self.pivots = peak_valley_pivots(self.asset[self.val_name].values, h, -h) #?Добрые люди сделали zigzag за меня а я нагло украл (возвращает numpy.ndarray)
+        self.pivots *= -1
+        
+        self.firstidx = 0
+        self.lastidx = 0
+        for i in range(len(self.pivots)):
+            if self.pivots[i] != 0:
+                self.lastidx = self.firstidx
+                self.firstidx = i
+                if i != 0:
+                    self.hoursdiff = self.firstidx - self.lastidx
+                    self.coef = random.betavariate(alpha=2, beta=3)
+                    self.idx_zeromark = round(self.coef*self.hoursdiff)+self.lastidx
+                    self.pivots[self.idx_zeromark] = 2
+                
+        self.asset.insert(1, "updown", self.pivots)
+        
+        time_history = getDistribution(asset, show_hist)
+        asset_indicators = asset[asset[asset.columns[1]] != 0]
+        print(f"Time history len: {time_history}h\nCount of indicator's point: {asset_indicators.shape[0]}")
+        prehistory = getPrehistory(asset=asset, time_history=time_history)
+        
+
+
+symbol = 'symbol=AAPL'
+interval='interval=60min'
+PATH_TO_CSV = 'data/' + symbol + interval + '.csv'
+
+df = pd.read_csv(PATH_TO_CSV)
+df.columns=['point', 'date/time', 'open', 'hight', 'low', 'close', 'volume']
+df['date/time'] = pd.to_datetime(df.loc[:,df.columns[1]])
+df.sort_values('date/time', ascending=True, inplace=True)
+df.reset_index(inplace=True)
+df = df.iloc[:,2:]
+
+volumetoplt = df[['date/time', 'volume']]
+volumetoplt.set_index('date/time', inplace=True)
+
+toplotdf = df.iloc[:,:5]
+toplotdf.set_index('date/time', inplace=True)
+
+df_open = df[['date/time', 'open']]
+df_open.set_index(df_open.columns[0], inplace=True)
+
+df_hight = df[['date/time', 'hight']]
+df_hight.set_index(df_hight.columns[0], inplace=True)
+
+df_low = df[['date/time', 'low']]
+df_low.set_index(df_low.columns[0], inplace=True)
+
+df_close = df[['date/time', 'close']]
+df_close.set_index(df_close.columns[0], inplace=True)
+
+  
+def showPlot(asset = pd.DataFrame()):
+    fig, ax = plt.subplots()
+    fig.subplots_adjust(bottom=0.2)
+    
+    indicator_asset = asset[(asset[asset.columns[1]] != 0) & (asset[asset.columns[1]] != 2)][asset.columns[0]]
+    
+    ax.plot(asset[asset.columns[0]], color='red', linewidth = 1)
+    ax.plot(indicator_asset, linewidth = 2, linestyle = '--')
+    
+    asset_down = asset[asset[asset.columns[1]] == -1][asset.columns[0]]
+    asset_up = asset[asset[asset.columns[1]] == 1][asset.columns[0]]
+    asset_non = asset[asset[asset.columns[1]] == 2][asset.columns[0]]
+    
+    ax.scatter(asset_down.index, asset_down.values, color='r')
+    ax.scatter(asset_up.index, asset_up.values, color='g')
+    ax.scatter(asset_non.index, asset_non.values, color='magenta')
+    
+    plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
+    plt.show()
+
+def getDistribution(asset = pd.DataFrame(), show_plt = True):
+    asset_pivots = asset[(asset[asset.columns[1]] != 0) & (asset[asset.columns[1]] != 2)]
+    
+    time_diff = pd.DataFrame()
+    for i in range(len(asset_pivots.index)-1):
+        date1 = asset_pivots.iloc[i,:].name
+        date2 = asset_pivots.iloc[i+1,:].name
+        temp_time = pd.DataFrame(data=[date2-date1])
+        time_diff = pd.concat([time_diff, temp_time])
+    time_diff.reset_index(inplace=True)
+    time_diff = time_diff.iloc[:,1]
+    
+    h = time_diff.astype('timedelta64[h]').values
+    h = h.astype(np.float64) #Тут точки для гистограммы
+    
+    pd.DataFrame(h).to_csv('histagram/points.csv') 
+    
+    counts, bins = np.histogram(h, bins=20, density=False)
+    hist_df = pd.DataFrame(data=[counts, bins])
+    hist_df = hist_df.T
+    os.makedirs('histagram', exist_ok=True)
+    hist_df.to_csv(f'histagram/hist_{symbol}_{interval}_{asset.columns[0]}.csv')
+    
+    indexmax = counts.argmax()
+    if show_plt:
+        plt.stairs(counts, bins)
+        plt.show()
+    return round(np.average(h)/2)
+  
+def getPrehistory(asset = pd.DataFrame(), time_history = int()):
+    points = asset[asset[asset.columns[1]] != 0]
+    prehistory = pd.DataFrame()
+    for i in reversed(points.index):
+        temparr = asset.loc[:i].tail(time_history)[asset.columns[0]].values
+        indicator = points.loc[i, points.columns[1]]
+        
+        if indicator == 2: indicator = 0
+        linedf = []
+        linedf.append(indicator)
+        for i in temparr: linedf.append(i)
+        
+        if len(temparr) == time_history:
+            temparr = [linedf]
+            tempdf = pd.DataFrame(temparr)
+            prehistory = pd.concat([prehistory, tempdf])
+    
+    prehistory.reset_index(inplace=True)
+    prehistory = prehistory.iloc[:,1:] 
+    prehistory.rename(columns={0:'indicator'}, inplace=True)
+    print(prehistory)
+    return prehistory
+        
+
+          
+h_open = 0.023
+h_hight = 0.02
+h_low = 0.02
+h_close = 0.08    
+zigzagIndicator(h_close, df_close, True, True)
+# zigzagIndicator(h_open, df_open, True, True)
+# zigzagIndicator(h_hight, df_hight, True, True)
+# zigzagIndicator(h_low, df_low, True, True)
+# zigzagIndicator(h_close, df_close, True, True)
