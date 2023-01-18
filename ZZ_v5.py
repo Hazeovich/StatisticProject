@@ -45,6 +45,8 @@ def showPlot(asset = pd.DataFrame()):
     ax.plot(asset[asset.columns[0]], color='red', linewidth = 1)
     ax.plot(indicator_asset, linewidth = 2, linestyle = '--')
     
+    
+    
     asset_down = asset[asset[asset.columns[1]] == -1][asset.columns[0]]
     asset_up = asset[asset[asset.columns[1]] == 1][asset.columns[0]]
     asset_non = asset[asset[asset.columns[1]] == 2][asset.columns[0]]
@@ -52,6 +54,8 @@ def showPlot(asset = pd.DataFrame()):
     ax.scatter(asset_down.index, asset_down.values, color='r')
     ax.scatter(asset_up.index, asset_up.values, color='g')
     ax.scatter(asset_non.index, asset_non.values, color='magenta')
+    
+    ax.figure.legend(['График активов', 'ZigZag', 'Верхний разворот', 'Нижний разворот', 'Нейтраль'])
     
     plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
     plt.show()
@@ -81,7 +85,11 @@ def getDistribution(asset = pd.DataFrame(), show_plt = True):
     
     indexmax = counts.argmax()
     if show_plt:
-        plt.stairs(counts, bins)
+        plt.hist(bins[:-1], bins, weights=counts)
+        plt.xlabel('Интервал между разворотными точками в минутах')
+        plt.ylabel('Кол-во разворотных точек')
+        plt.title('Гистограма распределения интервалов между разворотными точками')
+        plt.style.use("seaborn-v0_8-pastel")
         plt.show()
     return round(np.average(h)/2)
   

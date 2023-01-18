@@ -15,7 +15,8 @@ H_DIM4 = 4
 LEARNING_RATE = 0.01 
 EPOCHES = 1000
 
-df = pd.read_csv('D:\Programing\Project\prehistory\dataset_symbol=AAPL_interval=60min_close.csv')
+#df = pd.read_csv('D:\Programing\Project\prehistory\dataset_symbol=AAPL_interval=60min_close.csv')
+df = pd.read_csv('prehistory\dataset_EURUSD_1m.csv')
 df = df.iloc[:,1:]
 
 print(df)
