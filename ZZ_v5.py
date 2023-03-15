@@ -71,14 +71,14 @@ def getDistribution(asset = pd.DataFrame(), show_plt = True):
     h = time_diff.astype('timedelta64[h]').values
     h = h.astype(np.float64) #Тут точки для гистограммы
     
-    pd.DataFrame(h).to_csv('histagram/points.csv') 
-    
     counts, bins = np.histogram(h, bins=20, density=False)
     hist_df = pd.DataFrame(data=[counts, bins])
     hist_df = hist_df.T
     os.makedirs('histagram', exist_ok=True)
     hist_df.to_csv(f'histagram/hist_{symbol}_{interval}_{asset.columns[0]}.csv')
-    
+    pd.DataFrame(h).to_csv('histagram/points.csv') 
+
+
     indexmax = counts.argmax()
     if show_plt:
         plt.stairs(counts, bins)
@@ -134,7 +134,7 @@ def zigzagIndicator(h, asset = pd.DataFrame(), show_plt = False, show_hist = Fal
     print(f"Time history len: {time_history}h\nCount of indicator's point: {asset_indicators.shape[0]}")
     prehistory = getPrehistory(asset=asset, time_history=time_history)
     os.makedirs('prehistory', exist_ok=True)
-    prehistory.to_csv(f'prehistory\dataset_{symbol}_{interval}_{asset.columns[0]}.csv') #?Сохраняем в csv
+    prehistory.to_csv(f'prehistory/dataset_{symbol}_{interval}_{asset.columns[0]}.csv') #?Сохраняем в csv
           
 h_open = 0.023
 h_hight = 0.02
